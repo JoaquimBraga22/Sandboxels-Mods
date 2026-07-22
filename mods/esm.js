@@ -26,7 +26,7 @@ function get_esms() {
 
 function create_li(url) {
     const li = document.createElement("li");
-    li.innerHTML = `<a href="${url}">${url.split("/").pop()}</a> `;
+    li.innerHTML = `<a href="${url}" target="_blank" rel="noopener noreferrer">${url.split("/").pop()}</a> `;
 
     const remove_btn = document.createElement("span");
     remove_btn.innerText = "X";
