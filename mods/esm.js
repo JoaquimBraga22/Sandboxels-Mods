@@ -62,6 +62,11 @@ function patch() {
         .getElementById("modManagerList")
         .insertAdjacentElement("afterend", ul)
         .insertAdjacentHTML("beforebegin", "<span>Modules</span>");
+
+    // clear out any stale entries
+    for (const item of document.getElementById("modManagerList").children) {
+        if (item.querySelector("a").href.endsWith(".mjs")) item.remove() 
+    }
 }
 
 function rip_esms() {
