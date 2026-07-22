@@ -1,3 +1,4 @@
+(() => {
 const STYLE = `
 html, body {
 	width:  100%;
@@ -1251,3 +1252,4 @@ dependOn(
             .forEach(x => x.classList.add("settingsInput"))
     }
 )
+})()

@@ -1,3 +1,4 @@
+(() => {
 const STYLE = `
 #ejs_list {
     li {
@@ -105,7 +106,7 @@ function load() {
     }
 }
 
-function addMod(url, noMessage) {
+window.addMod = (url, noMessage) => {
     let split = url.split(/ ?; ?/g);
 
     if (split.length > 1) {
@@ -180,3 +181,4 @@ function addMod(url, noMessage) {
 rip_esms();
 load();
 runAfterLoad(() => patch());
+})()
