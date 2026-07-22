@@ -1,5 +1,9 @@
 (() => {
 const STYLE = `
+#ejs_header:has(+ #ejs_list:empty) {
+    display: none;
+}
+
 #ejs_list {
     li {
         list-style-type: none;
@@ -61,7 +65,7 @@ function patch() {
     document
         .getElementById("modManagerList")
         .insertAdjacentElement("afterend", ul)
-        .insertAdjacentHTML("beforebegin", "<span>Modules</span>");
+        .insertAdjacentHTML("beforebegin", "<span id='ejs_header'>Modules</span>");
 
     // clear out any stale entries
     for (const item of document.getElementById("modManagerList").children) {
