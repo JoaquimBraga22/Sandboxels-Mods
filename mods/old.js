@@ -1199,6 +1199,40 @@ img {
   padding-right: 1em;
   display: none;
 }
+
+.ojs_ch_header {
+    font-family: "VT323";
+    font-size: 2em;
+}
+
+#ojs_ch_list {
+    padding-left: 1.5em;
+
+    h3 {
+        font-family: "VT323";
+        font-size: 1.6em;
+    	margin: 1em 0 0.2em -0.6em;
+    }
+
+    li {
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 1.25em;
+        padding-left: 0.3em;
+
+        &[data-ch="+"]::marker {
+            content: "+";
+            color: #00ff00;
+        }
+        &[data-ch="-"]::marker {
+            content: "-";
+            color: #ff0000;
+        }
+        &[data-ch="~"]::marker {
+            content: "~";
+            color: #ffff00;
+        }
+    }
+}
 `
 
 function shove_up(elem, count) {
@@ -1230,8 +1264,52 @@ function patch_settings() {
 		"#betterSettings\\/div\\/general.toggles-row .toggles-row,"+
 		"#settingsMenu .toggles-row"
 	)
-	console.debug(toggles_row)
 	shove_up(toggles_row, 7)
+}
+
+// Using the text changelog because it felt like it'd be nicer to get
+// old looking. Also likely to never never break this way, seeing as that
+// thing's layout's probably set in stone)
+function parse_changelog(text) {
+    const txt = text.slice(text.indexOf('['))
+
+    const container = document.createElement("div")
+    let changes;
+
+    // i cba to do this properly with a state machine
+    const version_header_regex = /^\[(.*)\]$/
+    const subheader_regex      = /^   \[(.*)\]$/
+    const change_regex         = /^    ([+-~]) (.*)$/
+
+    for (const line of txt.split("\n")) {
+        // poor man's if let
+        if (vh_match = version_header_regex.exec(line)) {
+            const header = document.createElement("h2")
+            header.classList.add("ojs_ch_header")
+            header.innerText = `[${vh_match[1]}]`
+
+            if (changes) container.append(changes)
+            container.append(header)
+
+            changes = document.createElement("ul")
+            changes.id = "ojs_ch_list"
+        }
+        else if (subh_match = subheader_regex.exec(line)) {
+            const header = document.createElement("h3")
+            header.innerText = `[${subh_match[1]}]`
+
+            changes.append(header)
+        }
+        else if (ch_match = change_regex.exec(line)) {
+            const item = document.createElement("li")
+            item.innerText = ch_match[2]
+            item.dataset.ch = ch_match[1]
+
+            changes.append(item)
+        }
+    }
+
+    return container
 }
 
 runAfterLoad(() => {
@@ -1243,7 +1321,29 @@ runAfterLoad(() => {
 
 	patch_save_to_file()
 	patch_settings()
-});
+
+    window.showChangelog = async () => {
+        if (!text) {
+            const res = await fetch("https://neal.fun/sandboxels/changelog.txt")
+            var text = await res.text() // yes, var is deliberate
+        }
+
+        if (showingMenu === "prompt" && promptState.id === "changelog") {
+            closeMenu();
+            return;
+        }
+        promptState = {
+            text: "",
+            title: "",
+            html: parse_changelog(text).outerHTML,
+            type: "text",
+            full: true,
+            tall: true,
+            id: "changelog"
+        }
+        showPromptScreen();
+    }
+})
 
 dependOn(
     "betterSettings.js", 
