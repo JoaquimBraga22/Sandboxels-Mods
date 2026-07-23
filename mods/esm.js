@@ -151,6 +151,11 @@ patch();
 rip_esms(ls_manager);
 load(ls_manager);
 
+// ---- PUBLIC API ----
+window.ejs = {
+    get_esms: () => ls_manager.load(),
+}
+
 // ---- PATCHED VERSIONS OF BUILTIN FUNCTIONS ----
 
 window.addMod = (url, noMessage) => {
