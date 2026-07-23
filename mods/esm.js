@@ -42,10 +42,7 @@ class StorageManager {
         const remove_btn = document.createElement("span");
         remove_btn.innerText = "X";
         remove_btn.classList.add("removeModX");
-        remove_btn.onclick = () => {
-            ls_manager.remove(url)
-            li.remove()
-        };
+        remove_btn.onclick = () => removeMod(url);
         li.append(remove_btn);
 
         return li;
@@ -97,10 +94,15 @@ class StorageManager {
     }
 
     remove(url) {
-        this.#list.querySelector(`a[href="${url}"]`)?.remove()
+        this.#list.querySelector(`li:has(a[href="${url}"])`)?.remove()
 
-        this.#loaded_esms.delete(url)
-        localStorage.ejs_loaded_esms = JSON.stringify(Array.from(this.#loaded_esms))
+        if (this.#loaded_esms.delete(url)) {
+            localStorage.ejs_loaded_esms = JSON.stringify(Array.from(this.#loaded_esms))
+            return true
+        }
+        else { 
+            return false
+        }
     }
 }
 
@@ -236,5 +238,44 @@ window.addMod = (url, noMessage) => {
     }
 
     return url;
+}
+
+window.removeMod = (url, noMessage) => {
+    if (ls_manager.remove(url)) {
+        if (!noMessage) {
+            changedMods = true;
+            promptText((standalone ? "Reset the canvas" : "Refresh the page")+" to apply changes.", showModManager, "Removed Mod");
+        }
+    }
+    else {
+        // remove url from enabledMods and set the localStorage
+        for (var i = 0; i < enabledMods.length; i++) {
+            if (enabledMods[i] == url) {
+                enabledMods.splice(i, 1);
+                break;
+            }
+        }
+
+        if (enabledMods.length === 0) {
+            document.getElementById("noMods").style.display = "block";
+        }
+        document.getElementById("modManagerRefresh").style.display = "block";
+        localStorage.setItem("enabledMods", JSON.stringify(enabledMods));
+        // remove from modManagerList by href
+        var modManagerList = document.getElementById("modManagerList");
+        var modManagerListLinks = modManagerList.getElementsByTagName("a");
+        url = url.replaceAll('"','');
+        for (var i = 0; i < modManagerListLinks.length; i++) {
+            if (modManagerListLinks[i].href.endsWith(url)) {
+                modManagerListLinks[i].parentNode.remove();
+                break;
+            }
+        }
+
+        if (!noMessage) {
+            changedMods = true;
+            promptText((standalone ? "Reset the canvas" : "Refresh the page")+" to apply changes.", showModManager, "Removed Mod");
+        }
+    }
 }
 })()
