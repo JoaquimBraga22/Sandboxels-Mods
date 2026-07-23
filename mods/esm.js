@@ -1,21 +1,30 @@
 (() => {
 const STYLE = `
-#ejs_header:has(+ #ejs_list:empty) {
+#ejs_mheader,#ejs_nheader {
+    margin-left: 0.6em
+}
+
+#ejs_nheader {
+    margin-top: 0.8em;
+}
+
+#ejs_mheader:has(+ #ejs_list:empty) {
     display: none;
 }
 
-#ejs_list {
-    li {
-        list-style-type: none;
-        position: relative;
-    }
+#ejs_list,#modManagerList {
+    padding-left: 2em;
+    margin-top: 0.5em;
 
-    li::before {
-        content: "•";
-        position: absolute;
-        left: -1.5em;
-        font-size: 1em;
-        font-family: "Press Start 2P";
+    li {
+        padding-left: 0.5em;
+
+        &::before { display: none }
+        &::marker {
+            content: "•";
+            font-size: 1em;
+            font-family: "Press Start 2P";
+        }
     }
 }
 `;
@@ -67,10 +76,12 @@ class StorageManager {
             this.#list.append(StorageManager.#create_li(url)) 
         }
     
-        document
-            .getElementById("modManagerList")
+        const mm_list = document.getElementById("modManagerList")
+
+        mm_list.insertAdjacentHTML("beforebegin", "<div id='ejs_nheader'>Normal</div>")
+        mm_list
             .insertAdjacentElement("afterend", this.#list)
-            .insertAdjacentHTML("beforebegin", "<span id='ejs_header'>Modules</span>");
+            .insertAdjacentHTML("beforebegin", "<div id='ejs_mheader'>Modules</div>")
     }
 
     load()  { return this.#loaded_esms }
