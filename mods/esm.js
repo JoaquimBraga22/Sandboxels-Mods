@@ -20,30 +20,77 @@ const STYLE = `
 }
 `;
 
-function get_esms() {
-    if (!localStorage.ejs_loaded_esms) {
-        localStorage.ejs_loaded_esms = "[]";
+// Guess this also doing some UI isn't *really* fully OOP-ic, but the mod isn't
+// big enough to justify the extra plumbing that needs
+class StorageManager {
+    #loaded_esms = new Set()
+    #list
+
+    static #create_li(url) {
+        const li = document.createElement("li");
+        li.innerHTML = `<a href="${url}" target="_blank" rel="noopener noreferrer">${url.split("/").pop()}</a> `;
+
+        const remove_btn = document.createElement("span");
+        remove_btn.innerText = "X";
+        remove_btn.classList.add("removeModX");
+        remove_btn.onclick = () => {
+            ls_manager.remove(url)
+            li.remove()
+        };
+        li.append(remove_btn);
+
+        return li;
     }
 
-    return JSON.parse(localStorage.ejs_loaded_esms);
-}
+    constructor() {
+        if (!localStorage.ejs_loaded_esms) {
+            localStorage.ejs_loaded_esms = "[]";
+        }
+        
+        try {
+            this.#loaded_esms = new Set(JSON.parse(localStorage.ejs_loaded_esms));
+        }
+        catch (e) {
+            if (e instanceof SyntaxError) {
+                console.error("localstorage entry contains invalid JSON, clearing")
+                localStorage.ejs_loaded_esms = "[]"
+            }
+            else {
+                throw e
+            }
+        }
 
-function create_li(url) {
-    const li = document.createElement("li");
-    li.innerHTML = `<a href="${url}" target="_blank" rel="noopener noreferrer">${url.split("/").pop()}</a> `;
+        this.#list = document.createElement("ul");
+        this.#list.id = "ejs_list";
+        
+        for (const url of this.#loaded_esms) {
+            this.#list.append(StorageManager.#create_li(url)) 
+        }
+    
+        document
+            .getElementById("modManagerList")
+            .insertAdjacentElement("afterend", this.#list)
+            .insertAdjacentHTML("beforebegin", "<span id='ejs_header'>Modules</span>");
+    }
 
-    const remove_btn = document.createElement("span");
-    remove_btn.innerText = "X";
-    remove_btn.classList.add("removeModX");
-    remove_btn.onclick = (url) => {
-        localStorage.ejs_loaded_esms = JSON.stringify(
-            get_esms().filter((x) => x != url),
-        );
-        li.remove()
-    };
-    li.append(remove_btn);
+    load()  { return this.#loaded_esms }
+    count() { return this.#loaded_esms.length }
 
-    return li;
+    add(...urls) {
+        for (const url of urls) {
+            this.#loaded_esms.add(url)
+            this.#list.append(StorageManager.#create_li(url))
+        }
+
+        localStorage.ejs_loaded_esms = JSON.stringify(Array.from(this.#loaded_esms))
+    }
+
+    remove(url) {
+        this.#list.querySelector(`a[href="${url}"]`)?.remove()
+
+        this.#loaded_esms.delete(url)
+        localStorage.ejs_loaded_esms = JSON.stringify(Array.from(this.#loaded_esms))
+    }
 }
 
 function patch() {
@@ -51,38 +98,20 @@ function patch() {
     style_div.innerHTML = STYLE;
     document.head.appendChild(style_div);
 
-    const ul = document.createElement("ul");
-    ul.id = "ejs_list";
-
-    for (const url of get_esms()) {
-        ul.append(create_li(
-            url
-                .replace('"', '\\"')
-                .replace("'", "\\'"),
-        ));
-    }
-
-    document
-        .getElementById("modManagerList")
-        .insertAdjacentElement("afterend", ul)
-        .insertAdjacentHTML("beforebegin", "<span id='ejs_header'>Modules</span>");
-
     // clear out any stale entries
     for (const item of document.getElementById("modManagerList").children) {
         if (item.querySelector("a").href.endsWith(".mjs")) item.remove() 
     }
 }
 
-function rip_esms() {
-    const esms = get_esms();
+function rip_esms(ls_manager) {
     const old_len = enabledMods.length;
-    esms.push(...enabledMods.filter((x) => x.endsWith(".mjs")));
-    localStorage.ejs_loaded_esms = JSON.stringify(esms);
+    ls_manager.add(...enabledMods.filter((x) => x.endsWith(".mjs")));
 
     enabledMods = enabledMods.filter((x) => !x.endsWith(".mjs"));
     localStorage.enabledMods = JSON.stringify(enabledMods);
 
-    if (esms.length > old_len) {
+    if (ls_manager.count() > old_len) {
         modManagerList = document.getElementById("modManagerList");
         modManagerList.innerHTML = "";
 
@@ -104,8 +133,8 @@ function rip_esms() {
     }
 }
 
-function load() {
-    for (const mod of get_esms()) {
+function load(ls_manager) {
+    for (const mod of ls_manager.load()){
         const elem = document.createElement("script");
         elem.src = mod;
         elem.setAttribute("type", "module");
@@ -114,6 +143,15 @@ function load() {
         console.log(elem);
     }
 }
+
+
+const ls_manager = new StorageManager()
+
+patch();
+rip_esms(ls_manager);
+load(ls_manager);
+
+// ---- PATCHED VERSIONS OF BUILTIN FUNCTIONS ----
 
 window.addMod = (url, noMessage) => {
     let split = url.split(/ ?; ?/g);
@@ -151,10 +189,7 @@ window.addMod = (url, noMessage) => {
     }
 
     if (url.endsWith(".mjs")) {
-        localStorage.ejs_loaded_esms = JSON.stringify([...get_esms(), url]);
-
-        const list = document.getElementById("ejs_list");
-        list.append(create_li(url));
+        ls_manager.add(url)
     } else {
         // add it to enabledMods and set the localStorage
         enabledMods.push(url);
@@ -186,8 +221,4 @@ window.addMod = (url, noMessage) => {
 
     return url;
 }
-
-rip_esms();
-load();
-runAfterLoad(() => patch());
 })()
