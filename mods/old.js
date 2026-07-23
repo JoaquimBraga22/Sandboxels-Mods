@@ -490,10 +490,11 @@ input[type="button"]:active, input[type="button"]:active:hover {
 	float:right;
 }
 #stats {
-	padding: 0px 5px 0px 5px;
+	padding: 0px 2px;
 	font-size: 0.75em;
 	height: 1.5em;
 	line-height: 1.5em;
+    align-content: center;
 	/* width:calc(100% - 5px); */
 	/* no wrapping */
 	white-space: nowrap;
@@ -825,6 +826,7 @@ button, input { /*Disable double tap zoom on mobile devices*/
 	position:relative;
 	overflow-x:hidden;
 	background-color: var(--theme-opac75);
+    line-height: 1;
 }
 #colorSelector {
 	position:absolute;
@@ -849,7 +851,9 @@ button, input { /*Disable double tap zoom on mobile devices*/
 			  user-select: none; /* Non-prefixed version, currently supported by Chrome and Opera */
 }
 .setting-span {
-	display:block;padding-bottom:0.5em
+	display:block;
+    padding-bottom: 0.5em;
+    margin-left: 1em;
 }
 .multisetting {
 	display: inline-block
