@@ -1204,6 +1204,26 @@ img {
   display: none;
 }
 
+#promptParent:has(#ojs_changelog) {
+    max-height: none;
+    height: 70vh;
+
+    .XButton {
+        position: sticky;
+        float: right;
+    }
+
+    #promptMenu {
+        padding: 0 !important;
+        width: 100%;
+
+        > *:not(.XButton) {
+            margin-left: 10px;
+            margin-right: 10px;
+        }
+    }
+}
+
 .ojs_ch_header {
     font-family: "VT323";
     font-size: 2em;
@@ -1278,6 +1298,7 @@ function parse_changelog(text) {
     const txt = text.slice(text.indexOf('['))
 
     const container = document.createElement("div")
+    container.id = "ojs_changelog"
     let changes;
 
     // i cba to do this properly with a state machine
